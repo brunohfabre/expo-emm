@@ -272,11 +272,11 @@ class ExpoEmmModule : Module() {
 
     Function("getNetworkInfo") {
       try {
-        val subscriptionManager = getSystemService(Service.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
+        val subscriptionManager = context.getSystemService(Service.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
 
         val sis: List<SubscriptionInfo> = subscriptionManager.getActiveSubscriptionInfoList()
 
-        val connectivityManager = getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val connectivityManager = context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
 
         val currentNetwork = connectivityManager.activeNetwork
         val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
