@@ -97,3 +97,7 @@ export function requestOverlayPermission(): void {
 export function requestPackageUsageStatsPermission(): void {
   return ExpoEmmModule.requestPackageUsageStatsPermission();
 }
+
+export function getNetworkInfo(): void {
+  return ExpoEmmModule.getNetworkInfo();
+}

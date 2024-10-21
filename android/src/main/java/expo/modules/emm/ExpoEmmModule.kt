@@ -28,6 +28,11 @@ import android.app.WallpaperManager
 import android.provider.Settings
 import android.app.AppOpsManager
 import android.os.Process
+import android.telephony.SubscriptionInfo
+import android.telephony.SubscriptionManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
+import android.net.wifi.WifiInfo
 
 class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -260,6 +265,28 @@ class ExpoEmmModule : Module() {
         intent.data = Uri.fromParts("package", context.packageName, null)
 
         context.startActivity(intent);
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
+
+    Function("getNetworkInfo") {
+      try {
+        val subscriptionManager = getSystemService(Service.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
+
+        val sis: List<SubscriptionInfo> = subscriptionManager.getActiveSubscriptionInfoList()
+
+        val connectivityManager = getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
+
+        val currentNetwork = connectivityManager.activeNetwork
+        val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
+        val linkProperties = connectivityManager.getLinkProperties(currentNetwork)
+
+        val info = mutableMapOf<String, String>()
+
+        val transportInfo = caps?.transportInfo as WifiInfo
+        
+        sis.toString() + "" + transportInfo.toString()
       } catch (e: Exception) {
         "not-permitted"
       }
