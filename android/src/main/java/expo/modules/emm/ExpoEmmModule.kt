@@ -272,21 +272,29 @@ class ExpoEmmModule : Module() {
 
     Function("getNetworkInfo") {
       try {
+        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+
         val subscriptionManager = context.getSystemService(Service.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
 
         val sis: List<SubscriptionInfo> = subscriptionManager.getActiveSubscriptionInfoList()
 
-        val connectivityManager = context.getSystemService(Service.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val mobile = mutableListOf<Map<String, String?>>()
 
-        val currentNetwork = connectivityManager.activeNetwork
-        val caps = connectivityManager.getNetworkCapabilities(currentNetwork)
-        val linkProperties = connectivityManager.getLinkProperties(currentNetwork)
-
-        val info = mutableMapOf<String, String>()
-
-        val transportInfo = caps?.transportInfo as WifiInfo
-        
-        sis.toString() + "" + transportInfo.toString()
+        sis.forEach { item ->
+          mobile.add(
+            mutableMapOf(
+              "iccid" to item.iccId.toString(),
+              "slot" to item.simSlotIndex.toString(),
+              "mcc" to item.getMccString(),
+              "mnc" to item.getMncString(),
+            )
+          )
+        }
+            
+        mapOf(
+          "mobile" to mobile,
+          "wifi" to ""
+        )
       } catch (e: Exception) {
         "not-permitted"
       }

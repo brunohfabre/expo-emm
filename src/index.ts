@@ -98,6 +98,14 @@ export function requestPackageUsageStatsPermission(): void {
   return ExpoEmmModule.requestPackageUsageStatsPermission();
 }
 
-export function getNetworkInfo(): void {
+export function getNetworkInfo(): {
+  wifi: any;
+  mobile: {
+    mnc: string;
+    mcc: string;
+    slot: string;
+    iccid: string;
+  }[];
+} {
   return ExpoEmmModule.getNetworkInfo();
 }
