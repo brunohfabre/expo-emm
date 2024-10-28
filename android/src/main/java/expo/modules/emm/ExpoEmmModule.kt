@@ -263,8 +263,11 @@ class ExpoEmmModule : Module() {
     Function("requestOverlayPermission") {
       try {
         val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+        val uri = Uri.fromParts("package", context.packageName, null)
 
-        context.startActivity(intent);
+        intent.setData(uri)
+
+        context.startActivity(intent)
       } catch (e: Exception) {
         "not-permitted"
       }
@@ -272,9 +275,11 @@ class ExpoEmmModule : Module() {
     Function("requestPackageUsageStatsPermission") {
       try {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        intent.data = Uri.fromParts("package", context.packageName, null)
+        val uri = Uri.fromParts("package", context.packageName, null)
 
-        context.startActivity(intent);
+        intent.setData(uri)
+
+        context.startActivity(intent)
       } catch (e: Exception) {
         "not-permitted"
       }
