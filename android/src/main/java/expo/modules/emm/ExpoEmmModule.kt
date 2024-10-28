@@ -33,6 +33,7 @@ import android.telephony.SubscriptionManager
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
+import android.app.Activity
 
 class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -310,6 +311,24 @@ class ExpoEmmModule : Module() {
           "mobile" to mobile,
           "wifi" to ""
         )
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
+
+    Function("sendActivityResultOk") {
+      try {
+        val activity = appContext.activityProvider?.currentActivity
+
+        if(activity != null) {
+          val intent = Intent()
+          
+          activity.setResult(Activity.RESULT_OK, intent)
+          
+          activity.finish()
+        } else {
+          "not-permitted"
+        }
       } catch (e: Exception) {
         "not-permitted"
       }

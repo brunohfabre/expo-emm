@@ -109,3 +109,7 @@ export function getNetworkInfo(): {
 } {
   return ExpoEmmModule.getNetworkInfo();
 }
+
+export function sendActivityResultOk(): string {
+  return ExpoEmmModule.sendActivityResultOk();
+}
