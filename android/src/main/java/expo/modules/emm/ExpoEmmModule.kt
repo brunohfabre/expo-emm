@@ -38,8 +38,18 @@ class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ExpoEmm")
 
-    Function("hello") {
-      "Hello world! 👋"
+    Function("openedByDpc") {
+      try {
+        val activity = appContext.activityProvider?.currentActivity
+
+        if(activity != null) {
+          activity.intent.getSerializableExtra("com.google.android.apps.work.clouddpc.EXTRA_LAUNCHED_AS_SETUP_ACTION")
+        } else {
+          "not-permitted"
+        }
+      } catch (e: Exception) {
+        "not-permitted"
+      }
     }
 
     Function("getEnrollmentSpecificId") {

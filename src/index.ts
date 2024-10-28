@@ -1,7 +1,7 @@
 import ExpoEmmModule from "./ExpoEmmModule";
 
-export function hello(): string {
-  return ExpoEmmModule.hello();
+export function openedByDpc(): string {
+  return ExpoEmmModule.openedByDpc();
 }
 
 export function getEnrollmentSpecificId(): string {
