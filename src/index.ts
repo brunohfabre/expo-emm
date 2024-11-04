@@ -1,3 +1,4 @@
+import { uniqBy } from "lodash";
 import ExpoEmmModule from "./ExpoEmmModule";
 
 export function openedByDpc(): string {
@@ -63,7 +64,7 @@ export function getInstalledPackages({
 
   const sortedPackages = packages.sort((a, b) => a.name.localeCompare(b.name));
 
-  return sortedPackages;
+  return uniqBy(sortedPackages, 'packageName');
 }
 
 export function launchApplication(packageName: string): string {

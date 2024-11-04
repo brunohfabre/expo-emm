@@ -1,6 +1,6 @@
 {
   "name": "expo-emm",
-  "version": "0.1.11",
+  "version": "0.1.12",
   "description": "My new module",
   "main": "build/index.js",
   "types": "build/index.d.ts",
@@ -28,8 +28,11 @@
   "author": "Bruno Fabre <bruno.hfabre@gmail.com> (https://github.com/brunohfabre)",
   "license": "MIT",
   "homepage": "https://github.com/brunohfabre/expo-emm#readme",
-  "dependencies": {},
+  "dependencies": {
+    "lodash": "^4.17.21"
+  },
   "devDependencies": {
+    "@types/lodash": "^4.17.13",
     "@types/react": "^18.0.25",
     "expo-module-scripts": "^3.5.2",
     "expo-modules-core": "^1.12.24"
