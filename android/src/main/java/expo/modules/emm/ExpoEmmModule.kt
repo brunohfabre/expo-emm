@@ -34,6 +34,9 @@ import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiInfo
 import android.app.Activity
+import java.util.Calendar
+import android.app.usage.NetworkStats
+import android.app.usage.NetworkStatsManager
 
 class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -329,6 +332,103 @@ class ExpoEmmModule : Module() {
         } else {
           "not-permitted"
         }
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
+
+    Function("getAppUsages") { packages: Array<String> ->
+      try {
+        val usageStatsManager = context.getSystemService(Service.USAGE_STATS_SERVICE) as UsageStatsManager
+
+        val startOfDay = Calendar.getInstance()
+        startOfDay.set(Calendar.DAY_OF_MONTH, 0)
+
+        val date = Calendar.getInstance()
+
+        val usageStatsMap: Map<String, UsageStats> = usageStatsManager.queryAndAggregateUsageStats(0, date.timeInMillis)
+
+        val usages = ArrayList<Map<String, String>>()
+
+        for(item in packages) {
+          usages.add(
+            mutableMapOf(
+              "packageName" to item, 
+              "time" to usageStatsMap[item]?.totalTimeInForeground.toString()
+            )
+          )
+        }
+
+        usages
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
+
+    Function("getNetworkStats") { packages: Array<String> ->
+      try {
+        val networkStatsManager = context.getSystemService(Service.NETWORK_STATS_SERVICE) as NetworkStatsManager
+
+        val usages = ArrayList<Map<String, String>>()
+
+        for(item in packages) {
+          val info = context.packageManager.getApplicationInfo(item, 0)
+          val uid = info.uid
+
+          val packageWifi = networkStatsManager.queryDetailsForUid(
+            NetworkCapabilities.TRANSPORT_WIFI,
+            null,
+            0,
+            Calendar.getInstance().timeInMillis,
+            uid
+          )
+
+          val bucketWifi = NetworkStats.Bucket()
+
+          var receivedWifi = 0.0
+          var sentWifi = 0.0
+
+          while (packageWifi.hasNextBucket()) {
+            packageWifi.getNextBucket(bucketWifi)
+
+            receivedWifi += bucketWifi.rxBytes
+            sentWifi += bucketWifi.txBytes
+          }
+
+          val totalWifi = ((sentWifi + receivedWifi) / 1024 / 1024)
+
+          val packageMobile = networkStatsManager.queryDetailsForUid(
+            NetworkCapabilities.TRANSPORT_CELLULAR,
+            null,
+            0,
+            Calendar.getInstance().timeInMillis,
+            uid
+          )
+
+          val bucketMobile = NetworkStats.Bucket()
+
+          var receivedMobile = 0.0
+          var sentMobile = 0.0
+
+          while (packageMobile.hasNextBucket()) {
+            packageMobile.getNextBucket(bucketMobile)
+
+            receivedMobile += bucketMobile.rxBytes
+            sentMobile += bucketMobile.txBytes
+          }
+
+          val totalMobile = ((sentMobile + receivedMobile) / 1024 / 1024)
+
+          usages.add(
+            mutableMapOf(
+              "packageName" to item, 
+              "wifi" to totalWifi.toString(),
+              "mobile" to totalMobile.toString()
+            )
+          )
+        }
+
+        usages
       } catch (e: Exception) {
         "not-permitted"
       }

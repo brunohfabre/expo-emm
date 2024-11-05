@@ -114,3 +114,11 @@ export function getNetworkInfo(): {
 export function sendActivityResultOk(): string {
   return ExpoEmmModule.sendActivityResultOk();
 }
+
+export function getAppUsages(packages: string[]): string {
+  return ExpoEmmModule.getAppUsages(packages);
+}
+
+export function getNetworkStats(packages: string[]): string {
+  return ExpoEmmModule.getNetworkStats(packages);
+}
