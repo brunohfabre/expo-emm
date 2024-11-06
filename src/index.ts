@@ -117,14 +117,14 @@ export function sendActivityResultOk(): string {
 
 export function getAppUsages(packages: string[]): { time: number; packageName: string }[] {
   const items: {
-    time: string
+    time: string;
     packageName: string
-  }[] = ExpoEmmModule.getAppUsages(packages);
+  }[] = ExpoEmmModule.getAppUsages(packages)
 
   return items.map(item => ({
-    time: Number(item.time) ?? 0,
+    time: Number(item.time) || 0,
     packageName: item.packageName
-  }))
+  }));
 }
 
 export function getNetworkStats(packages: string[]): {
@@ -136,11 +136,11 @@ export function getNetworkStats(packages: string[]): {
     wifi: string,
     mobile: string,
     packageName: string,
-  }[] = ExpoEmmModule.getNetworkStats(packages);
+  }[] = ExpoEmmModule.getNetworkStats(packages)
 
   return items.map(item => ({
-    wifi: Number(item.wifi) ?? 0,
-    mobile: Number(item.mobile) ?? 0,
+    wifi: Number(item.wifi) || 0,
+    mobile: Number(item.mobile) || 0,
     packageName: item.packageName
   }))
 }
