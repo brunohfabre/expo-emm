@@ -115,10 +115,32 @@ export function sendActivityResultOk(): string {
   return ExpoEmmModule.sendActivityResultOk();
 }
 
-export function getAppUsages(packages: string[]): string {
-  return ExpoEmmModule.getAppUsages(packages);
+export function getAppUsages(packages: string[]): { time: number; packageName: string }[] {
+  const items: {
+    time: string
+    packageName: string
+  }[] = ExpoEmmModule.getAppUsages(packages);
+
+  return items.map(item => ({
+    time: Number(item.time) ?? 0,
+    packageName: item.packageName
+  }))
 }
 
-export function getNetworkStats(packages: string[]): string {
-  return ExpoEmmModule.getNetworkStats(packages);
+export function getNetworkStats(packages: string[]): {
+  wifi: number,
+  mobile: number,
+  packageName: string,
+}[] {
+  const items: {
+    wifi: string,
+    mobile: string,
+    packageName: string,
+  }[] = ExpoEmmModule.getNetworkStats(packages);
+
+  return items.map(item => ({
+    wifi: Number(item.wifi) ?? 0,
+    mobile: Number(item.mobile) ?? 0,
+    packageName: item.packageName
+  }))
 }
