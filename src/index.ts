@@ -144,3 +144,7 @@ export function getNetworkStats(packages: string[]): {
     packageName: item.packageName
   }))
 }
+
+export function getCallLog(): void {
+  return ExpoEmmModule.getCallLog();
+}

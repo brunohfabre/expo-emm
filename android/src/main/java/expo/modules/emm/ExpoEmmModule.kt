@@ -37,6 +37,7 @@ import android.app.Activity
 import java.util.Calendar
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
+import android.provider.CallLog
 
 class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -429,6 +430,53 @@ class ExpoEmmModule : Module() {
         }
 
         usages
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
+
+    Function("getCallLog") {
+      try {
+        val cursor = context.contentResolver.query(CallLog.Calls.CONTENT_URI, null, null, null, android.provider.CallLog.Calls.DATE + " DESC")
+
+        val calls = ArrayList<Map<String, String>>()
+
+        if (cursor != null) {
+          while (cursor.moveToNext()) {
+            val numberIndex = cursor.getColumnIndex(CallLog.Calls.NUMBER)
+            val number = cursor.getString(numberIndex)
+
+            val typeIndex = cursor.getColumnIndex(CallLog.Calls.TYPE)
+
+            val type = when(cursor.getString(typeIndex).toInt()) {
+              CallLog.Calls.INCOMING_TYPE -> "incoming"
+              CallLog.Calls.OUTGOING_TYPE -> "outgoing"
+              CallLog.Calls.MISSED_TYPE -> "missed"
+              CallLog.Calls.VOICEMAIL_TYPE -> "voicemail"
+              CallLog.Calls.REJECTED_TYPE -> "rejected"
+              CallLog.Calls.BLOCKED_TYPE -> "blocked"
+              CallLog.Calls.ANSWERED_EXTERNALLY_TYPE -> "answered-externally"
+              else -> "unknown"
+            }
+
+            val dateIndex = cursor.getColumnIndex(CallLog.Calls.DATE)
+            val date = cursor.getString(dateIndex)
+
+            val durationIndex = cursor.getColumnIndex(CallLog.Calls.DURATION)
+            val duration = cursor.getString(durationIndex)
+
+            calls.add(
+              mutableMapOf(
+                "number" to number,
+                "type" to type,
+                "date" to date,
+                "duration" to duration,
+              )
+            )
+          }
+        }
+      
+        calls
       } catch (e: Exception) {
         "not-permitted"
       }
