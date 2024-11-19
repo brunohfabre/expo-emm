@@ -91,6 +91,10 @@ export function verifyPackageUsageStatsPermission(): boolean {
   return ExpoEmmModule.verifyPackageUsageStatsPermission();
 }
 
+export function verifyUnknownSourcesPermission(): boolean {
+  return ExpoEmmModule.verifyUnknownSourcesPermission();
+}
+
 export function requestOverlayPermission(): void {
   return ExpoEmmModule.requestOverlayPermission();
 }
