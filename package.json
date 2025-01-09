@@ -1,6 +1,6 @@
 {
   "name": "expo-emm",
-  "version": "0.2.12",
+  "version": "0.2.17",
   "description": "My new module",
   "main": "build/index.js",
   "types": "build/index.d.ts",

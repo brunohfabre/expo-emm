@@ -152,3 +152,7 @@ export function getNetworkStats(packages: string[]): {
 export function getCallLog(): void {
   return ExpoEmmModule.getCallLog();
 }
+
+export function getIntentParam(): string {
+  return ExpoEmmModule.getIntentParam();
+}

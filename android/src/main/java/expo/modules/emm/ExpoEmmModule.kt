@@ -494,6 +494,20 @@ class ExpoEmmModule : Module() {
         "not-permitted"
       }
     }
+
+    Function("getIntentParam") {
+      try {
+        val activity = appContext.activityProvider?.currentActivity
+
+        if(activity != null) {
+          activity.intent.getStringExtra("param").toString()
+        } else {
+          "not-permitted"
+        }
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
   }
 
   private val context
