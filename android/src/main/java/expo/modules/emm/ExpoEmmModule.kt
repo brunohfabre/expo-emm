@@ -160,7 +160,11 @@ class ExpoEmmModule : Module() {
             }
           }
 
-          val application = applicationInfo.applicationInfo.loadLabel(packageManager).toString() + ";" + applicationInfo.packageName + ";" + applicationInfo.versionName + ";" + applicationInfo.longVersionCode.toString() + ";" + applicationInfo.firstInstallTime + ";" + applicationInfo.lastUpdateTime + ";" + icon
+          var application = "";
+
+          if(applicationInfo.applicationInfo !== null) {
+            application = applicationInfo.applicationInfo?.loadLabel(packageManager).toString() + ";" + applicationInfo.packageName + ";" + applicationInfo.versionName + ";" + applicationInfo.longVersionCode.toString() + ";" + applicationInfo.firstInstallTime + ";" + applicationInfo.lastUpdateTime + ";" + icon
+          }
 
           applications = applications + application
         }
@@ -309,19 +313,21 @@ class ExpoEmmModule : Module() {
 
         val subscriptionManager = context.getSystemService(Service.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
 
-        val sis: List<SubscriptionInfo> = subscriptionManager.getActiveSubscriptionInfoList()
+        val sis = subscriptionManager.getActiveSubscriptionInfoList()
 
         val mobile = mutableListOf<Map<String, String?>>()
 
-        sis.forEach { item ->
-          mobile.add(
-            mutableMapOf(
-              "iccid" to item.iccId.toString(),
-              "slot" to item.simSlotIndex.toString(),
-              "mcc" to item.getMccString(),
-              "mnc" to item.getMncString(),
+        if(sis !== null) {
+          sis.forEach { item ->
+            mobile.add(
+              mutableMapOf(
+                "iccid" to item.iccId.toString(),
+                "slot" to item.simSlotIndex.toString(),
+                "mcc" to item.getMccString(),
+                "mnc" to item.getMncString(),
+              )
             )
-          )
+          }
         }
             
         mapOf(
