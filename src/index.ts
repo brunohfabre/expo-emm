@@ -22,13 +22,11 @@ export function getDeviceId(): string {
 }
 
 export type ApplicationType = {
-  name: string;
+  label: string;
   packageName: string;
   versionName: string;
   versionCode: number;
-  firstInstallTime: string;
-  lastUpdateTime: string;
-  icon?: string;
+  icon: string;
 };
 
 interface GetInstalledPackagesProps {
@@ -38,31 +36,15 @@ interface GetInstalledPackagesProps {
 export function getInstalledPackages({
   withIcon,
 }: GetInstalledPackagesProps): ApplicationType[] {
-  const packages: ApplicationType[] = ExpoEmmModule.getInstalledPackages(
+  const packages: any[] = ExpoEmmModule.getInstalledPackages(
     withIcon,
-  ).map((item: string) => {
-    const [
-      name,
-      packageName,
-      versionName,
-      versionCode,
-      firstInstallTime,
-      lastUpdateTime,
-      icon,
-    ] = item.split(";");
+  )
 
-    return {
-      name,
-      packageName,
-      versionCode: Number(versionCode),
-      versionName,
-      firstInstallTime,
-      lastUpdateTime,
-      icon: icon ? `data:image/png;base64,${icon}` : "",
-    };
-  });
+  if (!packages) {
+    return []
+  }
 
-  const sortedPackages = packages.sort((a, b) => a.name.localeCompare(b.name));
+  const sortedPackages = packages.map(item => ({ ...item, versionCode: Number(item.versionCode) })).sort((a, b) => a.label.localeCompare(b.label));
 
   return uniqBy(sortedPackages, 'packageName');
 }

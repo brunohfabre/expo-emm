@@ -38,6 +38,44 @@ import java.util.Calendar
 import android.app.usage.NetworkStats
 import android.app.usage.NetworkStatsManager
 import android.provider.CallLog
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import kotlin.math.max
+import android.util.Log
+
+private fun drawableToBitmap(drawable: Drawable): Bitmap {
+  if (drawable is BitmapDrawable) {
+    return drawable.bitmap
+  } else {
+    val width = max(drawable.intrinsicWidth.toDouble(), 1.0).toInt()
+    val height = max(drawable.intrinsicHeight.toDouble(), 1.0).toInt()
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    drawable.setBounds(0, 0, width, height)
+    drawable.draw(canvas)
+    return bitmap
+  }
+}
+
+private fun saveIconToFile(iconBitmap: Bitmap, fileName: String, context: Context): String? {
+  val cacheDir = File(context.cacheDir, "icons")
+  if (!cacheDir.exists() && !cacheDir.mkdirs()) {
+    Log.e("AppUtils", "Failed to create directory for icons")
+    return null
+  }
+  val iconFile = File(cacheDir, "$fileName.png")
+  try {
+    FileOutputStream(iconFile).use { fos ->
+      iconBitmap.compress(Bitmap.CompressFormat.PNG, 100, fos)
+      fos.flush()
+      return iconFile.absolutePath
+    }
+  } catch (e: IOException) {
+    Log.e("AppUtils", "Error saving icon to file", e)
+    return null
+  }
+}
 
 class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
@@ -109,30 +147,30 @@ class ExpoEmmModule : Module() {
       }
     }
 
-    Function("getInstalledPackages") { getIcon: Boolean ->
+    Function("getInstalledPackages") { withIcon: Boolean ->
       try {
         val packageManager = context.packageManager
 
         val intent = Intent(Intent.ACTION_MAIN, null)
         intent.addCategory(Intent.CATEGORY_LAUNCHER);
 
-        val items = packageManager.queryIntentActivities(intent, 0);
+        val allApps = packageManager.queryIntentActivities(intent, 0);
 
-        var applications = emptyArray<String>()
+        val applications = ArrayList<Map<String, String?>>()
 
-        for(item in items) {
-          val applicationInfo = packageManager.getPackageInfo(item.activityInfo.packageName, 0)
+        for(item in allApps) {
+          val packageInfo = packageManager.getPackageInfo(item.activityInfo.packageName, 0)
 
-          var icon = ""
+          var icon: String? = ""
 
-          if(getIcon) {
+          if(withIcon) {
             val drawable: Drawable = packageManager.getApplicationIcon(item.activityInfo.packageName)
 
             if(drawable is BitmapDrawable) {
               val outputStream = ByteArrayOutputStream()
               drawable.bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
 
-              icon = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+              icon = "data:image/jpeg;base64,${Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)}"
             } else if (drawable is AdaptiveIconDrawable) {
               val backgroundDr = drawable.background
               val foregroundDr = drawable.foreground
@@ -156,17 +194,25 @@ class ExpoEmmModule : Module() {
               val outputStream = ByteArrayOutputStream()
               bitmap.compress(Bitmap.CompressFormat.PNG, 100, outputStream)
 
-              icon = Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)
+              icon = "data:image/jpeg;base64,${Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT)}"
+            }
+
+            if(icon == "") {
+              val iconBitmap = drawableToBitmap(item.loadIcon(packageManager))
+
+              icon = saveIconToFile(iconBitmap, item.activityInfo.packageName, context)
             }
           }
 
-          var application = "";
-
-          if(applicationInfo.applicationInfo !== null) {
-            application = applicationInfo.applicationInfo?.loadLabel(packageManager).toString() + ";" + applicationInfo.packageName + ";" + applicationInfo.versionName + ";" + applicationInfo.longVersionCode.toString() + ";" + applicationInfo.firstInstallTime + ";" + applicationInfo.lastUpdateTime + ";" + icon
-          }
-
-          applications = applications + application
+          applications.add(
+            mutableMapOf(
+              "label" to item.loadLabel(packageManager).toString(), 
+              "packageName" to item.activityInfo.packageName,
+              "versionName" to packageInfo.versionName,
+              "versionCode" to packageInfo.getLongVersionCode().toString(),
+              "icon" to icon,
+            )
+          )
         }
 
         applications
