@@ -1,4 +1,6 @@
 import { uniqBy } from "lodash";
+import { Subscription } from 'expo-modules-core';
+
 import ExpoEmmModule from "./ExpoEmmModule";
 
 export function openedByDpc(): string {
@@ -131,10 +133,34 @@ export function getNetworkStats(packages: string[]): {
   }))
 }
 
-export function getCallLog(): void {
+type CallType = {
+  number: string
+  type: "INCOMING" | "OUTGOING" | "MISSED" | "VOICEMAIL" | "REJECTED" | "BLOCKED" | "ANSWERED_EXTERNALLY" | "UNKNOWN"
+  date: string
+  duration: string
+}
+
+export function getCallLog(): CallType[] {
   return ExpoEmmModule.getCallLog();
+}
+
+export function getCallLogsFromDate(fromDate: Date): CallType[] {
+  return ExpoEmmModule.getCallLogsFromDate(fromDate.getTime());
 }
 
 export function getIntentParam(): string {
   return ExpoEmmModule.getIntentParam();
+}
+
+export type BatteryChangeEvent = {
+  level: number
+  temperature: number
+  health: "GOOD" | "OVERHEAT" | "DEAD" | "OVER_VOLTAGE" | "UNSPECIFIED_FAILURE" | "COLD" | "UNKNOWN"
+  isCharging: boolean
+  source: "AC" | "USB" | "WIRELESS" | "DOCK" | "UNKNOWN"
+  lowPowerMode: boolean
+}
+
+export function addBatteryChangeListener(listener: (event: BatteryChangeEvent) => void): Subscription {
+  return ExpoEmmModule.addListener('onBatteryChange', listener);
 }

@@ -43,6 +43,10 @@ import java.io.FileOutputStream
 import java.io.IOException
 import kotlin.math.max
 import android.util.Log
+import android.content.BroadcastReceiver
+import android.content.IntentFilter
+import android.os.BatteryManager
+import android.os.PowerManager
 
 private fun drawableToBitmap(drawable: Drawable): Bitmap {
   if (drawable is BitmapDrawable) {
@@ -80,6 +84,13 @@ private fun saveIconToFile(iconBitmap: Bitmap, fileName: String, context: Contex
 class ExpoEmmModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("ExpoEmm")
+
+    Events("onBatteryChange")
+
+    OnStartObserving {
+      val intentFilter = IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+      context.registerReceiver(batteryReceiver, intentFilter)
+    }
 
     Function("openedByDpc") {
       try {
@@ -303,6 +314,7 @@ class ExpoEmmModule : Module() {
         "not-permitted"
       }
     }
+
     Function("verifyPackageUsageStatsPermission") {
       try {
         val appOps = context.getSystemService(Service.APP_OPS_SERVICE) as AppOpsManager
@@ -314,6 +326,7 @@ class ExpoEmmModule : Module() {
         "not-permitted"
       }
     }
+    
     Function("verifyUnknownSourcesPermission") {
       try {
         val allowed = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
@@ -340,6 +353,7 @@ class ExpoEmmModule : Module() {
         "not-permitted"
       }
     }
+
     Function("requestPackageUsageStatsPermission") {
       try {
         val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
@@ -355,8 +369,6 @@ class ExpoEmmModule : Module() {
 
     Function("getNetworkInfo") {
       try {
-        val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-
         val subscriptionManager = context.getSystemService(Service.TELEPHONY_SUBSCRIPTION_SERVICE) as SubscriptionManager
 
         val sis = subscriptionManager.getActiveSubscriptionInfoList()
@@ -547,6 +559,67 @@ class ExpoEmmModule : Module() {
       }
     }
 
+    Function("getCallLogsFromDate") { fromDate: Long ->
+      try {
+        val contentResolver = context.contentResolver
+        val projection = arrayOf(
+          CallLog.Calls.NUMBER,
+          CallLog.Calls.DATE,
+          CallLog.Calls.DURATION,
+          CallLog.Calls.TYPE
+        )
+
+        val selection = "${CallLog.Calls.DATE} >= ?"
+        val selectionArgs = arrayOf(fromDate.toString())
+
+        val cursor = contentResolver.query(
+          CallLog.Calls.CONTENT_URI,
+          projection,
+          selection,
+          selectionArgs,
+          "${CallLog.Calls.DATE} DESC"
+        )
+
+        val calls = ArrayList<Map<String, String>>()
+
+        cursor?.use {
+          val numberIndex = it.getColumnIndex(CallLog.Calls.NUMBER)
+          val dateIndex = it.getColumnIndex(CallLog.Calls.DATE)
+          val durationIndex = it.getColumnIndex(CallLog.Calls.DURATION)
+          val typeIndex = it.getColumnIndex(CallLog.Calls.TYPE)
+
+          while (it.moveToNext()) {
+            val number = it.getString(numberIndex)
+            val date = it.getLong(dateIndex)
+            val duration = it.getInt(durationIndex)
+            val type = when(it.getInt(typeIndex)) {
+              CallLog.Calls.INCOMING_TYPE -> "INCOMING"
+              CallLog.Calls.OUTGOING_TYPE -> "OUTGOING"
+              CallLog.Calls.MISSED_TYPE -> "MISSED"
+              CallLog.Calls.VOICEMAIL_TYPE -> "VOICEMAIL"
+              CallLog.Calls.REJECTED_TYPE -> "REJECTED"
+              CallLog.Calls.BLOCKED_TYPE -> "BLOCKED"
+              CallLog.Calls.ANSWERED_EXTERNALLY_TYPE -> "ANSWERED_EXTERNALLY"
+              else -> "UNKNOWN"
+            }
+
+            calls.add(
+              mutableMapOf(
+                "number" to number,
+                "type" to type,
+                "date" to date.toString(),
+                "duration" to duration.toString(),
+              )
+            )
+          }
+        }
+
+        calls
+      } catch (e: Exception) {
+        "not-permitted"
+      }
+    }
+
     Function("getIntentParam") {
       try {
         val activity = appContext.activityProvider?.currentActivity
@@ -564,4 +637,50 @@ class ExpoEmmModule : Module() {
 
   private val context
   get() = requireNotNull(appContext.reactContext)
+
+  val batteryReceiver = object : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+      val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+      val health = intent.getIntExtra(BatteryManager.EXTRA_HEALTH, -1)
+      val healthStatus = when (health) {
+        BatteryManager.BATTERY_HEALTH_GOOD -> "GOOD"
+        BatteryManager.BATTERY_HEALTH_OVERHEAT -> "OVERHEAT"
+        BatteryManager.BATTERY_HEALTH_DEAD -> "DEAD"
+        BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> "OVER_VOLTAGE"
+        BatteryManager.BATTERY_HEALTH_UNSPECIFIED_FAILURE -> "UNSPECIFIED_FAILURE"
+        BatteryManager.BATTERY_HEALTH_COLD -> "COLD"
+        else -> "UNKNOWN"
+      }
+
+      val temperature = intent.getIntExtra("temperature", -1) / 10.0
+
+      val level = intent.getIntExtra("level", -1)
+      val scale = intent.getIntExtra("scale", -1)
+      val batteryPct = level * 100 / scale
+      val status = intent.getIntExtra(BatteryManager.EXTRA_STATUS, -1)
+      val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING || status == BatteryManager.BATTERY_STATUS_FULL
+
+      val chargePlug = intent.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1)
+      val chargingSource = when (chargePlug) {
+        BatteryManager.BATTERY_PLUGGED_AC -> "AC"
+        BatteryManager.BATTERY_PLUGGED_USB -> "USB"
+        BatteryManager.BATTERY_PLUGGED_WIRELESS -> "WIRELESS"
+        BatteryManager.BATTERY_PLUGGED_DOCK -> "DOCK"
+        else -> "UNKNOWN"
+      }
+
+      val item = mutableMapOf(
+        "level" to batteryPct,
+        "temperature" to temperature,
+        "health" to healthStatus,
+        "isCharging" to isCharging,
+        "source" to chargingSource,
+        "lowPowerMode" to powerManager.isPowerSaveMode,
+      )
+
+      this@ExpoEmmModule.sendEvent("onBatteryChange", item)
+    }
+  }
 }
+
