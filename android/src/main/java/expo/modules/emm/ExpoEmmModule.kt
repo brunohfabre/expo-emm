@@ -341,25 +341,22 @@ class ExpoEmmModule : Module() {
       }
     }
 
-    Function("requestOverlayPermission") {
+    Function("verifyBatteryOptimizationPermission") {
       try {
-        val intent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
-        val uri = Uri.fromParts("package", context.packageName, null)
+        val powerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
-        intent.setData(uri)
+        val allowed = powerManager.isIgnoringBatteryOptimizations(context.packageName)
 
-        context.startActivity(intent)
+        allowed
       } catch (e: Exception) {
         "not-permitted"
       }
     }
 
-    Function("requestPackageUsageStatsPermission") {
+    Function("requestBatteryOptimizationPermission") {
       try {
-        val intent = Intent(Settings.ACTION_USAGE_ACCESS_SETTINGS)
-        val uri = Uri.fromParts("package", context.packageName, null)
-
-        intent.setData(uri)
+        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        intent.setData(Uri.parse("package:${context.packageName}"))
 
         context.startActivity(intent)
       } catch (e: Exception) {

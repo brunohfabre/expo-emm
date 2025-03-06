@@ -79,12 +79,12 @@ export function verifyUnknownSourcesPermission(): boolean {
   return ExpoEmmModule.verifyUnknownSourcesPermission();
 }
 
-export function requestOverlayPermission(): void {
-  return ExpoEmmModule.requestOverlayPermission();
+export function verifyBatteryOptimizationPermission(): boolean {
+  return ExpoEmmModule.verifyBatteryOptimizationPermission();
 }
 
-export function requestPackageUsageStatsPermission(): void {
-  return ExpoEmmModule.requestPackageUsageStatsPermission();
+export function requestBatteryOptimizationPermission(): void {
+  return ExpoEmmModule.requestBatteryOptimizationPermission();
 }
 
 export function getNetworkInfo(): {
