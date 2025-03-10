@@ -426,8 +426,11 @@ class ExpoEmmModule : Module() {
         val usages = ArrayList<Map<String, String>>()
 
         for(item in packages) {
+          val applicationInfo = context.packageManager.getApplicationInfo(item, 0)
+
           usages.add(
             mutableMapOf(
+              "appName" to context.packageManager.getApplicationLabel(applicationInfo).toString(),
               "packageName" to item, 
               "time" to usageStatsMap[item]?.totalTimeInForeground.toString()
             )
@@ -496,6 +499,7 @@ class ExpoEmmModule : Module() {
 
           usages.add(
             mutableMapOf(
+              "appName" to context.packageManager.getApplicationLabel(info).toString(),
               "packageName" to item, 
               "wifi" to totalWifi.toString(),
               "mobile" to totalMobile.toString()
